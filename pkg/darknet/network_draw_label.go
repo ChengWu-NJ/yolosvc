@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"log"
-	"math"
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
 )
@@ -13,24 +12,10 @@ type labelColor struct {
 	R, G, B float64
 }
 
-var (
-	colors = [6][3]float64{{1, 0, 1}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}
-)
-
-// R, G, B -- c: 2, 1, 0
-func getColor(c, x, max int) float64 {
-	ratio := (float64(x) / float64(max)) * 5.
-	fI := math.Floor(ratio)
-	i := int(fI)
-	j := int(math.Ceil(ratio))
-	ratio -= fI
-	return (1.-ratio)*colors[i][c] + ratio*colors[j][c]
-}
-
 // Draw detected results
 func (n *YOLONetwork) DrawDetectionResult(img image.Image, dr *DetectionResult) image.Image {
 	boxes, err := n.convertDetectionResultToBBOX(dr)
-	log.Printf(`convertDetectionResultToBBOX [%#v], len[%d] err[%v]`, boxes,len(boxes), err)
+	log.Printf(`convertDetectionResultToBBOX [%#v], len[%d] err[%v]`, boxes, len(boxes), err)
 	if err != nil {
 		return img
 	}
@@ -60,9 +45,12 @@ func (n *YOLONetwork) convertDetectionResultToBBOX(dr *DetectionResult) ([]*draw
 			Top:    float64(dt.StartPoint.Y),
 			Right:  float64(dt.EndPoint.X),
 			Bottom: float64(dt.EndPoint.Y),
-			R:      n.labelColors[id].R,
-			G:      n.labelColors[id].G,
-			B:      n.labelColors[id].B,
+			BoxR:   n.boxColors[id].R,
+			BoxG:   n.boxColors[id].G,
+			BoxB:   n.boxColors[id].B,
+			TxtR:   n.txtColors[id].R,
+			TxtG:   n.txtColors[id].G,
+			TxtB:   n.txtColors[id].B,
 			Label:  label,
 		}
 		boxes = append(boxes, box)

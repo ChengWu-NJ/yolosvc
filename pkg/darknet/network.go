@@ -28,8 +28,9 @@ type YOLONetwork struct {
 	hierarchalThreshold float32
 	nms                 float32
 
-	labelAdder  *drawbbox.LabelAdder
-	labelColors map[int]*labelColor
+	labelAdder *drawbbox.LabelAdder
+	boxColors  map[int]*labelColor
+	txtColors  map[int]*labelColor
 }
 
 var (
@@ -49,7 +50,7 @@ func (n *YOLONetwork) Init() error {
 	if n.cNet == nil {
 		return errUnableToInitNetwork
 	}
-	C.srand(2222222)
+	//C.srand(2222222)
 	n.hierarchalThreshold = 0.5
 	n.nms = 0.45
 	//metadata := C.get_metadata(nCfg)
@@ -57,15 +58,28 @@ func (n *YOLONetwork) Init() error {
 	//n.ClassNames = makeClassNames(metadata.names, n.Classes)
 
 	n.labelAdder = drawbbox.NewLabelAdder()
-	n.labelColors = make(map[int]*labelColor)
+	n.boxColors = make(map[int]*labelColor)
+	n.txtColors = make(map[int]*labelColor)
 
 	// set label colors of classes
+	var oR, oG, oB, cR, cG, cB float64
 	for classID := 0; classID < n.Classes; classID++ {
 		offset := (classID * 123457) % n.Classes
-		n.labelColors[classID] = &labelColor{
-			R: getColor(2, offset, n.Classes),
-			G: getColor(1, offset, n.Classes),
-			B: getColor(0, offset, n.Classes),
+		oR = drawbbox.GetColor(2, offset, n.Classes)
+		oG = drawbbox.GetColor(1, offset, n.Classes)
+		oB = drawbbox.GetColor(0, offset, n.Classes)
+
+		n.boxColors[classID] = &labelColor{
+			R: oR,
+			G: oG,
+			B: oB,
+		}
+
+		_, cR, cG, cB = drawbbox.GetConstrastColor(oR, oG, oB)
+		n.txtColors[classID] = &labelColor{
+			R: cR,
+			G: cG,
+			B: cB,
 		}
 	}
 

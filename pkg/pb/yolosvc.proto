@@ -1,0 +1,4 @@
+syntax = "proto3";
+
+package chengwunj.yolosvc.v1;
+option go_package = "github.com/ChengWu-NJ/yolosvc/v1/pb";

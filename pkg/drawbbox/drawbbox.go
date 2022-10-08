@@ -31,7 +31,8 @@ func NewLabelAdder() *LabelAdder {
 
 type BBox struct {
 	Left, Top, Right, Bottom float64
-	R, G, B                  float64
+	BoxR, BoxG, BoxB         float64
+	TxtR, TxtG, TxtB         float64
 	Label                    string
 }
 
@@ -60,8 +61,9 @@ func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox) image.Image {
 	for _, b := range boxes {
 		log.Printf(`box[%#v]`, b)
 		// draw box
-		a.dc.SetRGBA(b.R, b.G, b.R, 0.5)
+		a.dc.SetRGBA(b.BoxR, b.BoxG, b.BoxR, 0.5)
 		a.dc.DrawRectangle(b.Left, b.Top, math.Abs(b.Right-b.Left), math.Abs(b.Bottom-b.Top))
+		a.dc.ClearPath()
 
 		// draw background of label
 		bgW, bgH := a.dc.MeasureString(b.Label)
@@ -69,12 +71,14 @@ func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox) image.Image {
 		x_bg, y_bg := b.Left, b.Top-bgH
 		a.dc.DrawRectangle(x_bg, y_bg, bgW, bgH)
 		a.dc.Fill()
+		a.dc.ClearPath()
 
 		// draw text of label
 		face := truetype.NewFace(a.font, &truetype.Options{Size: fontHeight})
 		a.dc.SetFontFace(face)
 		x_txt, y_txt := b.Left+1., b.Top-1.
-		a.dc.SetRGBA(1.-b.R, 1.-b.G, 1-b.R, 0.5)
+
+		a.dc.SetRGBA(b.TxtR, b.TxtG, b.TxtB, 0.5)
 		a.dc.DrawString(b.Label, x_txt, y_txt)
 	}
 
