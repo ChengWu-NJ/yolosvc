@@ -64,7 +64,7 @@ func GetConstrastColor(r, g, b float64) (rate, fR, fG, fB float64) {
 				}
 
 				rate = (L1 + 0.05) / (L2 + 0.05)
-				if rate > 4.5 {
+				if rate > 5. {
 					return rate, fR, fG, fB
 				}
 			}

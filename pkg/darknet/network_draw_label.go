@@ -62,15 +62,11 @@ func (n *YOLONetwork) convertDetectionResultToBBOX(dr *DetectionResult) ([]*draw
 func getIDAndLabel(dt *Detection) (int, string) {
 	iMax, pMax := 0, float32(0.0)
 
-	log.Printf(`dt[%#v]`, dt)
-	log.Printf(`id[%#v], classNames[%#v], prob[%#v]`, len(dt.ClassIDs), len(dt.ClassNames), len(dt.Probabilities))
 	for i, p := range dt.Probabilities {
 		if p > pMax {
 			iMax, pMax = i, p
 		}
 	}
 
-	log.Printf(`iMax[%d], pMax[%f]`, iMax, pMax)
-
-	return iMax, fmt.Sprintf(`%s: %.2f`, dt.ClassNames[iMax], dt.Probabilities[iMax])
+	return dt.ClassIDs[iMax], fmt.Sprintf(`%s: %.2f`, dt.ClassNames[iMax], dt.Probabilities[iMax])
 }
