@@ -60,9 +60,10 @@ func (s *server) DetectOneJpg(ctx context.Context, jpgBytes *pb.JpgBytes) (*pb.J
 		return &pb.JpgBytes{}, fmt.Errorf(`got an empty JpgBytes argument`)
 	}
 
-	//s.detector.Detect()
+	var err error
+	jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(jpgBytes.JpgData)
 
-	return nil, nil
+	return jpgBytes, err
 }
 
 func (s *server) DetectJpgStream(pb.ObjDetect_DetectJpgStreamServer) error {
