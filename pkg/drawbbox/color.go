@@ -20,8 +20,6 @@ func GetColor(c, x, max int) float64 {
 	return r
 }
 
-// https://ux.stackexchange.com/questions/82056/how-to-measure-the-contrast-between-any-given-color-and-white/82068#82068
-
 // R, G, B -- 0 ~ 1
 func luminanceOfRGB255(r255, g255, b255 float64) float64 {
 	return 0.2126*cg(r255) + 0.7152*cg(g255) + 0.0722*cg(b255)
@@ -35,6 +33,7 @@ func cg(c float64) float64 {
 	return math.Pow((c/269. + 0.0513), 2.4)
 }
 
+// https://ux.stackexchange.com/questions/82056/how-to-measure-the-contrast-between-any-given-color-and-white/82068#82068
 func GetConstrastColor(r, g, b float64) (rate, fR, fG, fB float64) {
 	r255, g255, b255 := r*255., g*255., b*255.
 	origL := luminanceOfRGB255(r255, g255, b255)

@@ -1,4 +1,40 @@
 syntax = "proto3";
 
-package chengwunj.yolosvc.v1;
+package chengwu.yolosvc.v1;
 option go_package = "github.com/ChengWu-NJ/yolosvc/v1/pb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service ObjDetect {
+    rpc DetectOneJpg(JpgBytes) returns (JpgBytes) {
+        option (google.api.http) = {
+            post : "/v1/detectonejpg"
+        };
+    }
+
+    rpc DetectJpgStream(stream JpgBytes) returns (stream JpgBytes) {
+        option (google.api.http) = {
+            post : "/v1/detectjpgstream"
+        };
+    }
+
+    rpc Healthz(google.protobuf.Empty) returns (HealthzResponse) {
+        option (google.api.http) = {
+          post : "/v1/healthz"
+        };
+    };
+}
+
+message JpgBytes {
+    string srcID = 1;
+    int64 srcTs = 2; // unixnano timestamp
+    bytes jpgData = 3;
+}
+
+message HealthzResponse {
+    string state = 1;
+    google.protobuf.Timestamp htime = 2;
+  }
+  

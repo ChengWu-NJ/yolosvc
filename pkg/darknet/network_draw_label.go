@@ -1,8 +1,10 @@
 package darknet
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	"image/jpeg"
 	"log"
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
@@ -12,10 +14,37 @@ type labelColor struct {
 	R, G, B float64
 }
 
+func (n *YOLONetwork) DetectAndLabelOnJpeg(srcBytes []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(srcBytes)
+
+	srcImg, err := jpeg.Decode(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	imgDarknet, err := Image2Float32(srcImg)
+	if err != nil {
+		return nil, err
+	}
+	defer imgDarknet.Close()
+
+	results, err := n.Detect(imgDarknet)
+	if err != nil {
+		return nil, err
+	}
+
+	srcImg = n.DrawDetectionResult(srcImg, results)
+
+	if err := jpeg.Encode(buf, srcImg, nil); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // Draw detected results
 func (n *YOLONetwork) DrawDetectionResult(img image.Image, dr *DetectionResult) image.Image {
 	boxes, err := n.convertDetectionResultToBBOX(dr)
-	log.Printf(`convertDetectionResultToBBOX [%#v], len[%d] err[%v]`, boxes, len(boxes), err)
 	if err != nil {
 		return img
 	}
