@@ -1,0 +1,196 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "yolosvc.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ObjDetect"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/detectjpgstream": {
+      "post": {
+        "operationId": "ObjDetect_DetectJpgStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1JpgBytes"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1JpgBytes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "srcID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "srcTs",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "jpgData",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "ObjDetect"
+        ]
+      }
+    },
+    "/v1/detectonejpg": {
+      "post": {
+        "operationId": "ObjDetect_DetectOneJpg",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1JpgBytes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "srcID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "srcTs",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "jpgData",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "ObjDetect"
+        ]
+      }
+    },
+    "/v1/healthz": {
+      "post": {
+        "operationId": "ObjDetect_Healthz",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1HealthzResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ObjDetect"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1HealthzResponse": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "htime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1JpgBytes": {
+      "type": "object",
+      "properties": {
+        "srcID": {
+          "type": "string"
+        },
+        "srcTs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "jpgData": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    }
+  }
+}

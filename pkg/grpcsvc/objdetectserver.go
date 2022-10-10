@@ -3,10 +3,12 @@ package grpcsvc
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/config"
 	"github.com/ChengWu-NJ/yolosvc/pkg/darknet"
 	"github.com/ChengWu-NJ/yolosvc/pkg/pb"
+	"github.com/gookit/slog"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -66,7 +68,73 @@ func (s *server) DetectOneJpg(ctx context.Context, jpgBytes *pb.JpgBytes) (*pb.J
 	return jpgBytes, err
 }
 
-func (s *server) DetectJpgStream(pb.ObjDetect_DetectJpgStreamServer) error {
-	// TODO...
-	return nil
+func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) error {
+	stmCtx := stream.Context()
+	dataCh := make(chan *pb.JpgBytes, 100)
+	defer close(dataCh) // take the initiative to release resources which could ease the GC
+
+	exitCh := make(chan struct{})
+	defer close(exitCh)
+
+	// receiving loop goroutine
+	go func() {
+		for {
+			select {
+			case <-stmCtx.Done():
+				return
+
+			case <-s.ctx.Done():
+				return
+
+			case <-exitCh:
+				return
+
+			default:
+				jpgBytes, err := stream.Recv()
+				if err != nil {
+					if err == io.EOF {
+						// closed by the client
+						return
+					}
+
+					slog.Error(err)
+					// tolerate other errors, and let stmCtx.Done() to deal with the network errors
+					break // break out from select{}
+				}
+
+				if jpgBytes == nil || len(jpgBytes.JpgData) == 0 {
+					break // break out to ignor wrong data
+				}
+				select {
+				case dataCh <- jpgBytes:
+				default: // just skip away if dataCh is full
+				}
+			}
+		}
+	}()
+
+	// sending loop
+	var err error
+	for {
+		select {
+		case <-stmCtx.Done():
+			if stmCtx.Err() == io.EOF {
+				return nil
+			}
+			return stmCtx.Err()
+
+		case <-s.ctx.Done():
+			return s.ctx.Err()
+
+		case _jpgBytes := <-dataCh:
+			_jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(_jpgBytes.JpgData)
+			if err != nil {
+				slog.Error(err)
+				break // break out select{}
+			}
+
+			// ignore error check, and let stmCtx.Done() to deal with possible network errors
+			_ = stream.Send(_jpgBytes)
+		}
+	}
 }

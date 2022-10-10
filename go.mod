@@ -7,6 +7,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gookit/slog v0.3.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
+	github.com/spf13/pflag v1.0.5
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91
 	google.golang.org/grpc v1.50.0

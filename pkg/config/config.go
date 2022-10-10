@@ -17,7 +17,7 @@ type Config struct {
 	DetectThreshold    float32 `yaml:"detectThreshold"`
 	PortOfGrpcSvc      int     `yaml:"portOfGrpcSvc"`
 
-	ClassNames []string `yaml"-"`
+	ClassNames []string `yaml:"-"`
 }
 
 const (

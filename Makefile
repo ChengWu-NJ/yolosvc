@@ -4,7 +4,7 @@ PBDIR="./pkg/pb"
 all:
 	@$(MAKE) --no-print-directory deps
 	@$(MAKE) --no-print-directory protobuf
-#	@$(MAKE) --no-print-directory app
+	@$(MAKE) --no-print-directory yolosvc
 
 .PHONY: deps
 deps:
@@ -30,7 +30,8 @@ protobuf:
 	--openapiv2_opt logtostderr=true \
 	${PBDIR}/*.proto
 
-#.PHONY: app
-#app:
-#	go build
+.PHONY: yolosvc
+yolosvc:
+	go generate bin/yolosvc/main.go
+	go build -o bin/yolosvc/yolosvc bin/yolosvc/main.go
 
