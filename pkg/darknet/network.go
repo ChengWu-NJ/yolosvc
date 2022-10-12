@@ -11,6 +11,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/ChengWu-NJ/yolosvc/pkg/config"
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
 )
 
@@ -63,20 +64,15 @@ func (n *YOLONetwork) Init() error {
 
 	// set label colors of classes
 	var oR, oG, oB, cR, cG, cB float64
-	for classID := 0; classID < n.Classes; classID++ {
-		offset := (classID * 123457) % n.Classes
-		oR = drawbbox.GetColor(2, offset, n.Classes)
-		oG = drawbbox.GetColor(1, offset, n.Classes)
-		oB = drawbbox.GetColor(0, offset, n.Classes)
-
-		n.boxColors[classID] = &labelColor{
-			R: oR,
-			G: oG,
-			B: oB,
+	for _, cls := range config.GlobalConfig.ObjClasses{
+		n.boxColors[cls.Id] = &labelColor{
+			R: float64(cls.LabelColorR)/255.,
+			G: float64(cls.LabelColorG)/255.,
+			B: float64(cls.LabelColorB)/255.,
 		}
 
 		_, cR, cG, cB = drawbbox.GetConstrastColor(oR, oG, oB)
-		n.txtColors[classID] = &labelColor{
+		n.txtColors[cls.Id] = &labelColor{
 			R: cR,
 			G: cG,
 			B: cB,

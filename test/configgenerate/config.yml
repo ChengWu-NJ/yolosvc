@@ -1,0 +1,46 @@
+darknetConfigFile: /root/go/src/github.com/zmisc/yolosvc/test/configgenerate/darknetfiles/nn.cfg
+objNamesFile: /root/go/src/github.com/zmisc/yolosvc/test/configgenerate/darknetfiles/obj.names
+darknetWeightsFile: /root/go/src/github.com/zmisc/yolosvc/test/configgenerate/darknetfiles/nn.weights
+detectThreshold: 0.8
+portOfGrpcSvc: 37658
+objClasses:
+- id: 0
+  name: aa
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 1
+  name: bb
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 2
+  name: cc
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 3
+  name: dd
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 4
+  name: ee
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 5
+  name: ff
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 6
+  name: gg
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237
+- id: 7
+  name: hh
+  labelColorR: 237
+  labelColorG: 17
+  labelColorB: 237

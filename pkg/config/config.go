@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
+	"github.com/gookit/slog"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -17,7 +19,15 @@ type Config struct {
 	DetectThreshold    float32 `yaml:"detectThreshold"`
 	PortOfGrpcSvc      int     `yaml:"portOfGrpcSvc"`
 
-	ClassNames []string `yaml:"-"`
+	ObjClasses []*ObjClass `yaml:"objClasses"`
+}
+
+type ObjClass struct {
+	Id          int    `yaml:"id"`
+	Name        string `yaml:"name"`
+	LabelColorR int    `yaml:"labelColorR"`
+	LabelColorG int    `yaml:"labelColorG"`
+	LabelColorB int    `yaml:"labelColorB"`
 }
 
 const (
@@ -33,6 +43,19 @@ var (
 	ExecutablePath, ExecutableFile = getExecutablePath()
 	GlobalConfig                   = newConfig()
 )
+
+func (cfg *Config) GetClassNames() []string {
+	slc := make([]string, 0)
+	for _, cls := range cfg.ObjClasses {
+		slc = append(slc, cls.Name)
+	}
+
+	return slc
+}
+
+func (cfg *Config) GetClassNumber() int {
+	return len(cfg.ObjClasses)
+}
 
 func getExecutablePath() (string, string) {
 	ex, err := os.Executable()
@@ -51,11 +74,13 @@ func newConfig() *Config {
 		DarknetWeightsFile: ExecutablePath + `/` + DEFAULT_DARKNET_FILES_DIR + `/` + DEFAULT_DARKNET_WEIGHTSFILE,
 		DetectThreshold:    DEFAULT_DETECT_THRESHOLD,
 		PortOfGrpcSvc:      DEFAULT_PORT_OF_GRPCSVC,
-		ClassNames:         make([]string, 0),
+		ObjClasses:         make([]*ObjClass, 0),
 	}
 
 	if _, err := os.Stat(_configFile); err != nil {
 		if os.IsNotExist(err) {
+			cfg.setObjClasses()
+
 			cfgstr, err := yaml.Marshal(cfg)
 			if err != nil {
 				log.Fatalf("marshall config object to yaml: [%v]", err)
@@ -65,7 +90,6 @@ func newConfig() *Config {
 				log.Fatal(err)
 			}
 
-			cfg.loadObjNames()
 			return cfg
 		}
 
@@ -83,12 +107,11 @@ func newConfig() *Config {
 
 	validDarknetFile(cfg.DarknetConfigFile)
 	validDarknetFile(cfg.DarknetWeightsFile)
-	validDarknetFile(cfg.ObjNamesFile)
 	if cfg.DetectThreshold <= 0. {
 		cfg.DetectThreshold = DEFAULT_DETECT_THRESHOLD
 	}
 
-	cfg.loadObjNames()
+	cfg.setObjClasses()
 	return cfg
 }
 
@@ -98,21 +121,44 @@ func validDarknetFile(filename string) {
 	}
 }
 
-func (c *Config) loadObjNames() {
-	bs, err := ioutil.ReadFile(c.ObjNamesFile)
+func (cfg *Config) setObjClasses() {
+	if len(cfg.ObjClasses) > 0 {
+		slog.Info(`read object classes from config.yml`)
+		return
+	}
+
+	bs, err := ioutil.ReadFile(cfg.ObjNamesFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(`not found informations of object classes from config.yml, `+
+			`then try to read from file %s, but got err[%v]`, cfg.ObjNamesFile, err)
 	}
 
 	ss := strings.ReplaceAll(string(bs), "\r", "")
 	slc := strings.Split(ss, "\n")
 
+	idx := 0
 	for _, obj := range slc {
 		objStr := strings.TrimSpace(obj)
 		if len(objStr) == 0 {
 			continue
 		}
 
-		c.ClassNames = append(c.ClassNames, objStr)
+		objClass := &ObjClass{
+			Id:   idx,
+			Name: objStr,
+		}
+
+		cfg.ObjClasses = append(cfg.ObjClasses, objClass)
+		idx += 1
+	}
+
+	// calc label colors for obj classes
+	total := cfg.GetClassNumber()
+	for _, cls := range cfg.ObjClasses {
+		// calc color
+		offset := (idx * 123457) % total
+		cls.LabelColorR = int(drawbbox.GetColor(2, offset, total) * 255)
+		cls.LabelColorG = int(drawbbox.GetColor(1, offset, total) * 255)
+		cls.LabelColorB = int(drawbbox.GetColor(0, offset, total) * 255)
 	}
 }

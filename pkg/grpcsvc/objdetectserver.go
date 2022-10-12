@@ -39,8 +39,8 @@ func newDetector() (*darknet.YOLONetwork, error) {
 		NetworkConfigurationFile: config.GlobalConfig.DarknetConfigFile,
 		WeightsFile:              config.GlobalConfig.DarknetWeightsFile,
 		Threshold:                config.GlobalConfig.DetectThreshold,
-		ClassNames:               config.GlobalConfig.ClassNames,
-		Classes:                  len(config.GlobalConfig.ClassNames),
+		ClassNames:               config.GlobalConfig.GetClassNames(),
+		Classes:                  config.GlobalConfig.GetClassNumber(),
 	}
 
 	if err := detector.Init(); err != nil {
