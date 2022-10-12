@@ -112,6 +112,11 @@ func newConfig() *Config {
 	}
 
 	cfg.setObjClasses()
+
+	slog.Infof(`config:[%#v], `, cfg)
+	for _, cls := range cfg.ObjClasses {
+		slog.Infof(`class:[%#v]`, cls)
+	}
 	return cfg
 }
 
@@ -154,9 +159,9 @@ func (cfg *Config) setObjClasses() {
 
 	// calc label colors for obj classes
 	total := cfg.GetClassNumber()
-	for _, cls := range cfg.ObjClasses {
+	for i, cls := range cfg.ObjClasses {
 		// calc color
-		offset := (idx * 123457) % total
+		offset := (i * 123457) % total
 		cls.LabelColorR = int(drawbbox.GetColor(2, offset, total) * 255)
 		cls.LabelColorG = int(drawbbox.GetColor(1, offset, total) * 255)
 		cls.LabelColorB = int(drawbbox.GetColor(0, offset, total) * 255)

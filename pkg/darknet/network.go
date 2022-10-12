@@ -13,6 +13,7 @@ import (
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/config"
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
+	"github.com/gookit/slog"
 )
 
 // YOLONetwork represents a neural network using YOLO.
@@ -64,11 +65,14 @@ func (n *YOLONetwork) Init() error {
 
 	// set label colors of classes
 	var oR, oG, oB, cR, cG, cB float64
-	for _, cls := range config.GlobalConfig.ObjClasses{
+	for _, cls := range config.GlobalConfig.ObjClasses {
+		oR = float64(cls.LabelColorR) / 255.
+		oG = float64(cls.LabelColorG) / 255.
+		oB = float64(cls.LabelColorB) / 255.
 		n.boxColors[cls.Id] = &labelColor{
-			R: float64(cls.LabelColorR)/255.,
-			G: float64(cls.LabelColorG)/255.,
-			B: float64(cls.LabelColorB)/255.,
+			R: oR,
+			G: oG,
+			B: oB,
 		}
 
 		_, cR, cG, cB = drawbbox.GetConstrastColor(oR, oG, oB)
@@ -77,6 +81,9 @@ func (n *YOLONetwork) Init() error {
 			G: cG,
 			B: cB,
 		}
+		slog.Infof(`YOLONetwork Init - label color: Id:[%d], boxR:[%f], boxG:[%f], boxB:[%f], txtR:[%f], txtG:[%f], txtB:[%f]`,
+			cls.Id, n.boxColors[cls.Id].R, n.boxColors[cls.Id].G, n.boxColors[cls.Id].B,
+			n.txtColors[cls.Id].R, n.txtColors[cls.Id].G, n.txtColors[cls.Id].B)
 	}
 
 	return nil

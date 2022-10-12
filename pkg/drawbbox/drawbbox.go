@@ -59,7 +59,7 @@ func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox) image.Image {
 	a.dc.SetLineWidth(fontHeight / 10.)
 
 	for _, b := range boxes {
-		a.dc.SetRGBA(b.BoxR, b.BoxG, b.BoxR, 1.)
+		a.dc.SetRGB(b.BoxR, b.BoxG, b.BoxR)
 		// draw box
 		a.dc.DrawRectangle(b.Left, b.Top, math.Abs(b.Right-b.Left), math.Abs(b.Bottom-b.Top))
 		a.dc.Stroke()
@@ -79,7 +79,7 @@ func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox) image.Image {
 		a.dc.SetFontFace(face)
 		x_txt, y_txt := b.Left+1., b.Top-1-fontHeight/20.
 
-		a.dc.SetRGBA(b.TxtR, b.TxtG, b.TxtB, 1.)
+		a.dc.SetRGB(b.TxtR, b.TxtG, b.TxtB)
 		a.dc.DrawString(b.Label, x_txt, y_txt)
 	}
 
