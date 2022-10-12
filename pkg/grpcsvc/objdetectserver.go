@@ -73,20 +73,19 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 	dataCh := make(chan *pb.JpgBytes, 100)
 	defer close(dataCh) // take the initiative to release resources which could ease the GC
 
-	exitCh := make(chan struct{})
-	defer close(exitCh)
+	exitCtx, exitCancel := context.WithCancel(s.ctx)
+	defer exitCancel()
 
 	// receiving loop goroutine
 	go func() {
+		defer exitCancel()
+
 		for {
 			select {
 			case <-stmCtx.Done():
 				return
 
-			case <-s.ctx.Done():
-				return
-
-			case <-exitCh:
+			case <-exitCtx.Done():
 				return
 
 			default:
@@ -123,10 +122,10 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 			}
 			return stmCtx.Err()
 
-		case <-s.ctx.Done():
-			return s.ctx.Err()
+		case <-exitCtx.Done():
+			return nil
 
-		case _jpgBytes := <-dataCh:
+	case _jpgBytes := <-dataCh:
 			_jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(_jpgBytes.JpgData)
 			if err != nil {
 				slog.Error(err)
