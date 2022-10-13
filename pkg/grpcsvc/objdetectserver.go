@@ -63,7 +63,7 @@ func (s *server) DetectOneJpg(ctx context.Context, jpgBytes *pb.JpgBytes) (*pb.J
 	}
 
 	var err error
-	jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(jpgBytes.JpgData)
+	jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(jpgBytes)
 
 	return jpgBytes, err
 }
@@ -125,8 +125,8 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 		case <-exitCtx.Done():
 			return nil
 
-	case _jpgBytes := <-dataCh:
-			_jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(_jpgBytes.JpgData)
+		case _jpgBytes := <-dataCh:
+			_jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(_jpgBytes)
 			if err != nil {
 				slog.Error(err)
 				break // break out select{}

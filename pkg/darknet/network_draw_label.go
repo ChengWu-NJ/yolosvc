@@ -8,14 +8,15 @@ import (
 	"log"
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
+	"github.com/ChengWu-NJ/yolosvc/pkg/pb"
 )
 
 type labelColor struct {
 	R, G, B float64
 }
 
-func (n *YOLONetwork) DetectAndLabelOnJpeg(srcBytes []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(srcBytes)
+func (n *YOLONetwork) DetectAndLabelOnJpeg(jpgBytes *pb.JpgBytes) ([]byte, error) {
+	buf := bytes.NewBuffer(jpgBytes.JpgData)
 
 	srcImg, err := jpeg.Decode(buf)
 	if err != nil {
@@ -33,7 +34,7 @@ func (n *YOLONetwork) DetectAndLabelOnJpeg(srcBytes []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	srcImg = n.DrawDetectionResult(srcImg, results)
+	srcImg = n.DrawDetectionResult(srcImg, results, jpgBytes.SrcTs)
 
 	if err := jpeg.Encode(buf, srcImg, nil); err != nil {
 		return nil, err
@@ -43,13 +44,13 @@ func (n *YOLONetwork) DetectAndLabelOnJpeg(srcBytes []byte) ([]byte, error) {
 }
 
 // Draw detected results
-func (n *YOLONetwork) DrawDetectionResult(img image.Image, dr *DetectionResult) image.Image {
+func (n *YOLONetwork) DrawDetectionResult(img image.Image, dr *DetectionResult, nowTs int64) image.Image {
 	boxes, err := n.convertDetectionResultToBBOX(dr)
 	if err != nil {
 		return img
 	}
 
-	return n.labelAdder.AddOnImage(img, boxes)
+	return n.labelAdder.AddOnImage(img, boxes, nowTs)
 }
 
 func (n *YOLONetwork) convertDetectionResultToBBOX(dr *DetectionResult) ([]*drawbbox.BBox, error) {
