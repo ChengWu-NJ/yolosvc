@@ -54,8 +54,7 @@ func (a *LabelAdder) AddOnJpgBytes(jpgBytes []byte, boxes []*BBox, nowTs int64) 
 }
 
 func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox, nowTs int64) image.Image {
-	nowLabel := time.Unix(0, nowTs).Format("2006-01-02 15:04:05.00") + " UTC"
-
+	nowLabel := time.Unix(0, nowTs).UTC().Format("2006-01-02 15:04:05.00Z")
 	imgHigh := img.Bounds().Dy()
 	// adopt fontHeight as the unit
 	fontHeight := float64(imgHigh) / 1000. * 18.

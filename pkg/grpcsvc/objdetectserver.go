@@ -113,7 +113,6 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 	}()
 
 	// sending loop
-	var err error
 	for {
 		select {
 		case <-stmCtx.Done():
@@ -126,13 +125,15 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 			return nil
 
 		case _jpgBytes := <-dataCh:
-			_jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(_jpgBytes)
+			_newJpg, err := s.detector.DetectAndLabelOnJpeg(_jpgBytes)
 			if err != nil {
 				slog.Error(err)
+				_ = stream.Send(_jpgBytes) // send backup origin image
 				break // break out select{}
 			}
 
 			// ignore error check, and let stmCtx.Done() to deal with possible network errors
+			_jpgBytes.JpgData = _newJpg
 			_ = stream.Send(_jpgBytes)
 		}
 	}
