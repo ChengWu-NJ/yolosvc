@@ -74,7 +74,7 @@ func (a *LabelAdder) AddOnImage(img image.Image, boxes []*BBox, nowTs int64) ima
 	a.dc.Fill()
 	a.dc.ClearPath()
 	a.dc.SetRGB(0.9, 0.9, 0.9)
-	a.dc.DrawString(nowLabel, 2.*fontHeight, 2.8*fontHeight)
+	a.dc.DrawString(nowLabel, 2.*fontHeight, 3.8*fontHeight)
 
 	for _, b := range boxes {
 		a.dc.SetRGB(b.BoxR, b.BoxG, b.BoxR)

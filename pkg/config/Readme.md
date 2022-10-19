@@ -50,8 +50,8 @@ objClasses:
   labelColorB: 0
 - id: 7
   name: WCMM
-  # purple
-  labelColorR: 128
-  labelColorG: 0
-  labelColorB: 128
+  # pale green
+  labelColorR: 152
+  labelColorG: 251
+  labelColorB: 152
 ```
