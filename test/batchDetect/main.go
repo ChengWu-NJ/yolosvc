@@ -47,27 +47,28 @@ func main() {
 	scanner := bufio.NewScanner(batchFile)
 	ts0 := time.Now()
 	for scanner.Scan() {
-		_ts0 := time.Now()
 		fnImg := scanner.Text()
 		fnImg = strings.TrimSpace(fnImg)
+
+		_ts0 := time.Now()
 		if fnImg == "" {
 			continue
 		}
 
-		slog.Infof(`------- %000d. %s --------`, i, fnImg)
+		slog.Infof(`------- %d. %s --------`, i, fnImg)
 		if err := detectImgFile(fnImg, n); err != nil {
 			slog.Error(err)
-		} else {
-			oks++
 		}
+		oks++
 
-		i++
 		_ts1 := time.Now()
 		_timeLen := _ts1.Sub(_ts0)
-		slog.Infof(`detection spends %v seconds`, _timeLen)
-		}
-	ts1 := time.Now()
+		slog.Infof(`%d. %s detection spends %v seconds`, i, fnImg, _timeLen)
 
+		i++
+	}
+
+	ts1 := time.Now()
 	timeLen := ts1.Sub(ts0)
 	slog.Infof(`total %d images are detected in %v seconds. each image need %v`, oks, timeLen, timeLen/time.Duration(oks))
 
@@ -84,7 +85,7 @@ func main() {
 	   err = os.WriteFile(`/dev/shm/bboxedImg.jpg`, outBuf.Bytes(), 0660)
 	   log.Println(`save err:`, err)
 	*/
-	
+
 	<-ctx.Done()
 }
 
