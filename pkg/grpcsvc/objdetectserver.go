@@ -18,22 +18,26 @@ import (
 type server struct {
 	ctx context.Context
 	pb.ObjDetectServer
-	detector *darknet.YOLONetwork
+	Detector *darknet.YOLONetwork
+}
+
+func NewServer(ctx context.Context) (pb.ObjDetectServer, error) {
+	return newServer(ctx)
 }
 
 func newServer(ctx context.Context) (pb.ObjDetectServer, error) {
-	detector, err := newDetector()
+	detector, err := NewDetector()
 	if err != nil {
 		return nil, err
 	}
 
 	return &server{
 		ctx:      ctx,
-		detector: detector,
+		Detector: detector,
 	}, nil
 }
 
-func newDetector() (*darknet.YOLONetwork, error) {
+func NewDetector() (*darknet.YOLONetwork, error) {
 	detector := &darknet.YOLONetwork{
 		GPUDeviceIndex:           0,
 		NetworkConfigurationFile: config.GlobalConfig.DarknetConfigFile,
@@ -63,7 +67,7 @@ func (s *server) DetectOneJpg(ctx context.Context, jpgBytes *pb.JpgBytes) (*pb.J
 	}
 
 	var err error
-	jpgBytes.JpgData, err = s.detector.DetectAndLabelOnJpeg(jpgBytes)
+	jpgBytes.JpgData, err = s.Detector.DetectAndLabelOnJpeg(jpgBytes)
 
 	return jpgBytes, err
 }
@@ -125,11 +129,11 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 			return nil
 
 		case _jpgBytes := <-dataCh:
-			_newJpg, err := s.detector.DetectAndLabelOnJpeg(_jpgBytes)
+			_newJpg, err := s.Detector.DetectAndLabelOnJpeg(_jpgBytes)
 			if err != nil {
 				slog.Error(err)
 				_ = stream.Send(_jpgBytes) // send backup origin image
-				break // break out select{}
+				break                      // break out select{}
 			}
 
 			// ignore error check, and let stmCtx.Done() to deal with possible network errors

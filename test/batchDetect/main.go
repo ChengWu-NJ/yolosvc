@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"image/jpeg"
 	"log"
@@ -11,31 +12,25 @@ import (
 
 	"github.com/gookit/slog"
 
-	"github.com/ChengWu-NJ/yolosvc/pkg/config"
 	"github.com/ChengWu-NJ/yolosvc/pkg/darknet"
+	"github.com/ChengWu-NJ/yolosvc/pkg/grpcsvc"
 )
 
 const (
 	DARKNET_THRESHOLD = 0.8
 )
 
-var (
-	n *darknet.YOLONetwork
-)
-
 func main() {
+	ctx := context.Background()
 
-	n := &darknet.YOLONetwork{
-		GPUDeviceIndex:           0,
-		NetworkConfigurationFile: config.GlobalConfig.DarknetConfigFile,
-		WeightsFile:              config.GlobalConfig.DarknetWeightsFile,
-		Threshold:                config.GlobalConfig.DetectThreshold,
-		ClassNames:               config.GlobalConfig.GetClassNames(),
-		Classes:                  config.GlobalConfig.GetClassNumber(),
+	n, err := grpcsvc.NewDetector()
+	if err != nil {
+		slog.Error(err)
+		return
 	}
 
-	if err := n.Init(); err != nil {
-		slog.Fatal(err)
+	if n == nil {
+		slog.Error(`n is nil`)
 		return
 	}
 	defer n.Close()
@@ -52,6 +47,7 @@ func main() {
 	scanner := bufio.NewScanner(batchFile)
 	ts0 := time.Now()
 	for scanner.Scan() {
+		_ts0 := time.Now()
 		fnImg := scanner.Text()
 		fnImg = strings.TrimSpace(fnImg)
 		if fnImg == "" {
@@ -59,14 +55,17 @@ func main() {
 		}
 
 		slog.Infof(`------- %000d. %s --------`, i, fnImg)
-		if err := detectImgFile(fnImg); err != nil {
+		if err := detectImgFile(fnImg, n); err != nil {
 			slog.Error(err)
 		} else {
 			oks++
 		}
 
 		i++
-	}
+		_ts1 := time.Now()
+		_timeLen := _ts1.Sub(_ts0)
+		slog.Infof(`detection spends %v seconds`, _timeLen)
+		}
 	ts1 := time.Now()
 
 	timeLen := ts1.Sub(ts0)
@@ -85,9 +84,15 @@ func main() {
 	   err = os.WriteFile(`/dev/shm/bboxedImg.jpg`, outBuf.Bytes(), 0660)
 	   log.Println(`save err:`, err)
 	*/
+	
+	<-ctx.Done()
 }
 
-func detectImgFile(fnImg string) error {
+func detectImgFile(fnImg string, n *darknet.YOLONetwork) error {
+	if n == nil {
+		return fmt.Errorf(`n is nil`)
+	}
+
 	infile, err := os.Open(fnImg)
 	if err != nil {
 		return err
