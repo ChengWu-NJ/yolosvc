@@ -5,42 +5,54 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
-	"log"
 
 	"github.com/ChengWu-NJ/yolosvc/pkg/drawbbox"
 	"github.com/ChengWu-NJ/yolosvc/pkg/pb"
+	"github.com/gookit/slog"
 )
 
 type labelColor struct {
 	R, G, B float64
 }
 
-func (n *YOLONetwork) DetectAndLabelOnJpeg(jpgBytes *pb.JpgBytes) ([]byte, error) {
+func (n *YOLONetwork) DetectAndLabelOnJpeg(jpgBytes *pb.JpgBytes, outputCh *chan *pb.JpgBytes) {
 	buf := bytes.NewBuffer(jpgBytes.JpgData)
 
 	srcImg, err := jpeg.Decode(buf)
 	if err != nil {
-		return nil, err
+		slog.Trace(err)
+		*outputCh <- jpgBytes
+		return
 	}
 
 	imgDarknet, err := Image2Float32(srcImg)
 	if err != nil {
-		return nil, err
+		slog.Trace(err)
+		*outputCh <- jpgBytes
+		return
 	}
 	defer imgDarknet.Close()
 
 	results, err := n.Detect(imgDarknet)
 	if err != nil {
-		return nil, err
+		slog.Trace(err)
+		*outputCh <- jpgBytes
+		return
 	}
 
 	srcImg = n.DrawDetectionResult(srcImg, results, jpgBytes.SrcTs)
 
 	if err := jpeg.Encode(buf, srcImg, nil); err != nil {
-		return nil, err
+		slog.Trace(err)
+		*outputCh <- jpgBytes
+		return
 	}
 
-	return buf.Bytes(), nil
+	*outputCh <- &pb.JpgBytes{
+		SrcID:   jpgBytes.SrcID,
+		SrcTs:   jpgBytes.SrcTs,
+		JpgData: buf.Bytes(),
+	}
 }
 
 // Draw detected results
@@ -68,7 +80,7 @@ func (n *YOLONetwork) convertDetectionResultToBBOX(dr *DetectionResult) ([]*draw
 		}
 
 		id, label := getIDAndLabel(dt)
-		log.Printf(`id[%d], label[%s]`, id, label)
+		slog.Printf(`id[%d], label[%s]`, id, label)
 
 		box := &drawbbox.BBox{
 			Left:   float64(dt.StartPoint.X),

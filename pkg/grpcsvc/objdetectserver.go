@@ -66,16 +66,24 @@ func (s *server) DetectOneJpg(ctx context.Context, jpgBytes *pb.JpgBytes) (*pb.J
 		return &pb.JpgBytes{}, fmt.Errorf(`got an empty JpgBytes argument`)
 	}
 
-	var err error
-	jpgBytes.JpgData, err = s.Detector.DetectAndLabelOnJpeg(jpgBytes)
+	outputCh := make(chan *pb.JpgBytes, 1)
+	defer close(outputCh)
 
-	return jpgBytes, err
+	var err error
+	s.Detector.DetectAndLabelOnJpeg(jpgBytes, &outputCh)
+
+	return <-outputCh, err
 }
 
 func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) error {
 	stmCtx := stream.Context()
-	dataCh := make(chan *pb.JpgBytes, 100)
-	defer close(dataCh) // take the initiative to release resources which could ease the GC
+	labelCh := make(chan *pb.JpgBytes, 100)
+	outputCh := make(chan *pb.JpgBytes, 100)
+	defer func() {
+		// take the initiative to release resources which could ease the GC
+		close(outputCh)
+		close(labelCh)
+	}()
 
 	exitCtx, exitCancel := context.WithCancel(s.ctx)
 	defer exitCancel()
@@ -108,10 +116,29 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 				if jpgBytes == nil || len(jpgBytes.JpgData) == 0 {
 					break // break out to ignor wrong data
 				}
+
 				select {
-				case dataCh <- jpgBytes:
+				case labelCh <- jpgBytes:
 				default: // just skip away if dataCh is full
 				}
+			}
+		}
+	}()
+
+	// label routine
+	go func() {
+		defer exitCancel()
+
+		for {
+			select {
+			case <-stmCtx.Done():
+				return
+
+			case <-exitCtx.Done():
+				return
+
+			case _jpgBytes := <-labelCh:
+				go s.Detector.DetectAndLabelOnJpeg(_jpgBytes, &outputCh)
 			}
 		}
 	}()
@@ -128,16 +155,7 @@ func (s *server) DetectJpgStream(stream pb.ObjDetect_DetectJpgStreamServer) erro
 		case <-exitCtx.Done():
 			return nil
 
-		case _jpgBytes := <-dataCh:
-			_newJpg, err := s.Detector.DetectAndLabelOnJpeg(_jpgBytes)
-			if err != nil {
-				slog.Error(err)
-				_ = stream.Send(_jpgBytes) // send backup origin image
-				break                      // break out select{}
-			}
-
-			// ignore error check, and let stmCtx.Done() to deal with possible network errors
-			_jpgBytes.JpgData = _newJpg
+		case _jpgBytes := <-outputCh:
 			_ = stream.Send(_jpgBytes)
 		}
 	}
